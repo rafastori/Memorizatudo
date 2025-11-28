@@ -5,20 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mandarin Deep Thinking</title>
     
-    <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#047857">
     <link rel="manifest" href="./manifest.json">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3344/3344304.png">
     
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    
-    <!-- Biblioteca Pinyin (CRUCIAL PARA A CORREÇÃO) -->
     <script src="https://unpkg.com/pinyin-pro@3.18.3/dist/index.js"></script>
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script src="./conteudo.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -34,11 +35,6 @@
             }
         }
     </script>
-
-    <!-- React & Babel -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
         body, html { height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #f8fafc; }
@@ -56,31 +52,12 @@
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef } = React;
-        const { pinyin } = pinyinPro; // Acesso à biblioteca
+        const { pinyin } = pinyinPro;
 
-        // --- DADOS (Compactados) ---
-        const studyData = [
-            { id: 1, chinese: "看来你对 Gemini 3 的发布非常兴奋！在 YouTube 上确实有很多关于人工智能（AI）的热烈讨论。", pinyin: "Kànlái nǐ duì Gemini 3 de fābù fēicháng xīngfèn! Zài YouTube shàng quèshí yǒu hěnduō guānyú réngōng zhìnéng (AI) de rèliè tǎolùn.", translation: "Parece que você está muito animado com o lançamento do Gemini 3! No YouTube, há realmente muitas discussões acaloradas sobre IA.", tokens: ["看来", "你对", "Gemini 3", "的发布", "非常兴奋！", "在 YouTube 上", "确实有", "很多关于", "人工智能", "的热烈讨论。"], keywords: [{ id: "w1-1", word: "兴奋", pinyin: "xīngfèn", meaning: "Animado / Empolgado" }, { id: "w1-2", word: "确实", pinyin: "quèshí", meaning: "Realmente / De fato" }, { id: "w1-3", word: "热烈", pinyin: "rèliè", meaning: "Acalorado / Entusiasmado" }] },
-            { id: 2, chinese: "既然你想练习中文，而且对语音识别和深度思考感兴趣，我就用比较简单易懂的中文为你介绍一下。", pinyin: "Jìrán nǐ xiǎng liànxí zhōngwén, érqiě duì yǔyīn shíbié hé shēndù sīkǎo gǎn xìngqù, wǒ jiù yòng bǐjiào jiǎndān yìdǒng de zhōngwén wèi nǐ jièshào yīxià.", translation: "Já que você quer praticar chinês e se interessa por reconhecimento de voz e pensamento profundo, vou te apresentar isso usando um chinês simples e fácil de entender.", tokens: ["既然", "你想", "练习中文，", "而且对", "语音识别", "和", "深度思考", "感兴趣，", "我就用", "简单易懂的", "中文", "为你介绍一下。"], keywords: [{ id: "w2-1", word: "既然", pinyin: "jìrán", meaning: "Já que / Visto que" }, { id: "w2-2", word: "易懂", pinyin: "yìdǒng", meaning: "Fácil de entender" }, { id: "w2-3", word: "介绍", pinyin: "jièshào", meaning: "Apresentar / Introduzir" }] },
-            { id: 3, chinese: "这里是对这两个领域的简单介绍：1. 语音识别 (Speech Recognition)", pinyin: "Zhèlǐ shì duì zhè liǎng gè lǐngyù de jiǎndān jièshào: 1. Yǔyīn shíbié", translation: "Aqui está uma breve introdução a essas duas áreas: 1. Reconhecimento de Voz", tokens: ["这里是", "对", "这两个", "领域的", "简单介绍：", "1. 语音识别"], keywords: [{ id: "w3-1", word: "领域", pinyin: "lǐngyù", meaning: "Campo / Área" }, { id: "w3-2", word: "介绍", pinyin: "jièshào", meaning: "Introdução" }] },
-            { id: 4, chinese: "简单来说，这就是让电脑“听懂”人类的语言。", pinyin: "Jiǎndān lái shuō, zhè jiùshì ràng diànnǎo 'tīngdǒng' rénlèi de yǔyán.", translation: "Simplificando, é fazer o computador 'entender' a linguagem humana.", tokens: ["简单来说，", "这", "就是", "让电脑", "“听懂”", "人类的", "语言。"], keywords: [{ id: "w4-1", word: "简单来说", pinyin: "jiǎndān lái shuō", meaning: "Simplificando" }, { id: "w4-2", word: "听懂", pinyin: "tīngdǒng", meaning: "Entender (auditivamente)" }] },
-            { id: 5, chinese: "它的工作原理：电脑把你的声音（声波）转换成文字。", pinyin: "Tā de gōngzuò yuánlǐ: Diànnǎo bǎ nǐ de shēngyīn (shēngbō) zhuǎnhuàn chéng wénzì.", translation: "Seu princípio de funcionamento: O computador converte sua voz (ondas sonoras) em texto.", tokens: ["它的", "工作原理：", "电脑", "把你的", "声音", "转换成", "文字。"], keywords: [{ id: "w5-1", word: "原理", pinyin: "yuánlǐ", meaning: "Princípio / Teoria" }, { id: "w5-2", word: "转换", pinyin: "zhuǎnhuàn", meaning: "Converter / Transformar" }] },
-            { id: 6, chinese: "为什么它很厉害：以前的电脑只能听懂简单的指令。", pinyin: "Wèishéme tā hěn lìhài: Yǐqián de diànnǎo zhǐnéng tīngdǒng jiǎndān de zhǐlìng.", translation: "Por que isso é incrível: Computadores antigos só conseguiam entender comandos simples.", tokens: ["为什么", "它", "很厉害：", "以前的", "电脑", "只能", "听懂", "简单的", "指令。"], keywords: [{ id: "w6-1", word: "厉害", pinyin: "lìhài", meaning: "Incrível / Poderoso" }, { id: "w6-2", word: "指令", pinyin: "zhǐlìng", meaning: "Comando / Instrução" }] },
-            { id: 7, chinese: "现在的 AI（比如 Gemini）可以理解语调 (Tones)：特别是在中文里，语调非常重要。", pinyin: "Xiànzài de AI (bǐrú Gemini) kěyǐ lǐjiě yǔdiào: Tèbié shì zài zhōngwén lǐ, yǔdiào fēicháng zhòngyào.", translation: "A IA atual (como Gemini) pode entender tons: especialmente em chinês, os tons são muito importantes.", tokens: ["现在的 AI", "可以", "理解", "语调：", "特别是", "在中文里，", "语调", "非常", "重要。"], keywords: [{ id: "w7-1", word: "语调", pinyin: "yǔdiào", meaning: "Entonação / Tom" }, { id: "w7-2", word: "特别", pinyin: "tèbié", meaning: "Especialmente" }] },
-            { id: 8, chinese: "口音 (Accents): 哪怕你有口音，AI 也能大概猜出你在说什么。", pinyin: "Kǒuyīn: Nǎpà nǐ yǒu kǒuyīn, AI yě néng dàgài cāichū nǐ zài shuō shénme.", translation: "Sotaque: Mesmo se você tiver sotaque, a IA consegue adivinhar mais ou menos o que você está dizendo.", tokens: ["口音：", "哪怕", "你有", "口音，", "AI 也能", "大概", "猜出", "你", "在说什么。"], keywords: [{ id: "w8-1", word: "哪怕", pinyin: "nǎpà", meaning: "Mesmo que" }, { id: "w8-2", word: "大概", pinyin: "dàgài", meaning: "Provavelmente / Aproximadamente" }] },
-            { id: 9, chinese: "语速 (Speed): 即使说话很快，它也能跟上。", pinyin: "Yǔsù: Jíshǐ shuōhuà hěn kuài, tā yě néng gēnshàng.", translation: "Velocidade da fala: Mesmo se falar rápido, ela consegue acompanhar.", tokens: ["语速：", "即使", "说话", "很快，", "它", "也能", "跟上。"], keywords: [{ id: "w9-1", word: "即使", pinyin: "jíshǐ", meaning: "Mesmo se" }, { id: "w9-2", word: "跟上", pinyin: "gēnshàng", meaning: "Acompanhar / Manter o ritmo" }] },
-            { id: 10, chinese: "例子：当你对着手机说“设一个早上七点的闹钟”，手机立刻照做，这就是语音识别在工作。", pinyin: "Lìzi: Dāng nǐ duìzhe shǒujī shuō 'shè yīgè zǎoshang qīdiǎn de nàozhōng', shǒujī lìkè zhàozuò, zhè jiùshì yǔyīn shíbié zài gōngzuò.", translation: "Exemplo: Quando você diz ao celular 'defina um alarme para as sete da manhã' e ele faz imediatamente, isso é reconhecimento de voz em ação.", tokens: ["例子：", "当你", "对着手机", "说", "“设一个", "闹钟”，", "手机", "立刻", "照做，", "这", "就是", "语音识别", "在工作。"], keywords: [{ id: "w10-1", word: "立刻", pinyin: "lìkè", meaning: "Imediatamente" }, { id: "w10-2", word: "照做", pinyin: "zhàozuò", meaning: "Seguir instruções" }] },
-            { id: 11, chinese: "2. 深度思考与识别 (Deep Thinking & Reasoning)", pinyin: "2. Shēndù sīkǎo yǔ shíbié", translation: "2. Pensamento Profundo e Reconhecimento", tokens: ["2.", "深度思考", "与", "识别"], keywords: [{ id: "w11-1", word: "深度", pinyin: "shēndù", meaning: "Profundidade / Profundo" }] },
-            { id: 12, chinese: "你提到的“深度思考识别”，在 AI 领域通常指的是深度推理或自然语言理解。", pinyin: "Nǐ tídào de 'shēndù sīkǎo shíbié', zài AI lǐngyù tōngcháng zhǐ de shì shēndù tuīlǐ huò zìrán yǔyán lǐjiě.", translation: "O 'reconhecimento de pensamento profundo' que você mencionou geralmente se refere a Raciocínio Profundo ou Compreensão de Linguagem Natural na área de IA.", tokens: ["你提到的", "“深度思考识别”，", "在 AI 领域", "通常", "指的", "是", "深度推理", "或", "自然语言理解。"], keywords: [{ id: "w12-1", word: "通常", pinyin: "tōngcháng", meaning: "Geralmente" }, { id: "w12-2", word: "指", pinyin: "zhǐ", meaning: "Referir-se a / Apontar" }] },
-            { id: 13, chinese: "这比简单的“听写”要复杂得多。", pinyin: "Zhè bǐ jiǎndān de 'tīngxiě' yào fùzá de duō.", translation: "Isso é muito mais complexo do que um simples 'ditado'.", tokens: ["这", "比", "简单的", "“听写”", "要", "复杂", "得多。"], keywords: [{ id: "w13-1", word: "听写", pinyin: "tīngxiě", meaning: "Ditado" }, { id: "w13-2", word: "复杂", pinyin: "fùzá", meaning: "Complexo" }] },
-            { id: 14, chinese: "不仅是“听”，而是“懂”：以前的 AI 只是在找关键词。现在的 AI 会像人一样思考逻辑。", pinyin: "Bùjǐn shì 'tīng', érshì 'dǒng': Yǐqián de AI zhǐshì zài zhǎo guānjiàncí. Xiànzài de AI huì xiàng rén yīyàng sīkǎo luóji.", translation: "Não é apenas 'ouvir', mas 'entender': IAs antigas apenas procuravam palavras-chave. A IA atual pensa logicamente como um humano.", tokens: ["不仅是", "“听”，", "而是", "“懂”：", "以前的 AI", "只是", "在找", "关键词。", "现在的 AI", "会", "像人一样", "思考逻辑。"], keywords: [{ id: "w14-1", word: "不仅...而是", pinyin: "bùjǐn... érshì", meaning: "Não apenas... mas sim" }, { id: "w14-2", word: "逻辑", pinyin: "luóji", meaning: "Lógica" }] },
-            { id: 15, chinese: "上下文 (Context): 它能记住我们前面说了什么。AI 能识别这个关系。", pinyin: "Shàngxiàwén: Tā néng jìzhù wǒmen qiánmiàn shuōle shénme. AI néng shíbié zhège guānxì.", translation: "Contexto: Ela consegue lembrar o que dissemos antes. A IA pode identificar essa relação.", tokens: ["上下文：", "它能", "记住", "我们", "前面", "说了什么。", "AI 能", "识别", "这个", "关系。"], keywords: [{ id: "w15-1", word: "上下文", pinyin: "shàngxiàwén", meaning: "Contexto" }, { id: "w15-2", word: "关系", pinyin: "guānxì", meaning: "Relação / Relacionamento" }] },
-            { id: 16, chinese: "解决复杂问题：深度思考意味着 AI 可以一步一步地分析问题，而不是直接猜答案。", pinyin: "Jiějué fùzá wèntí: Shēndù sīkǎo yìwèizhe AI kěyǐ yībù yībù de fēnxī wèntí, ér bùshì zhíjiē cāi dá'àn.", translation: "Resolvendo problemas complexos: Pensamento profundo significa que a IA pode analisar problemas passo a passo, em vez de adivinhar a resposta.", tokens: ["解决", "复杂问题：", "深度思考", "意味着", "AI 可以", "一步一步地", "分析问题，", "而不是", "直接", "猜答案。"], keywords: [{ id: "w16-1", word: "解决", pinyin: "jiějué", meaning: "Resolver" }, { id: "w16-2", word: "意味着", pinyin: "yìwèizhe", meaning: "Significar" }] },
-            { id: 17, chinese: "小贴士 (Tip for your Chinese): 你刚才说的句子有一点重复，可以这样更自然地表达：", pinyin: "Xiǎotiēshì: Nǐ gāngcái shuō de jùzi yǒu yīdiǎn chóngfù, kěyǐ zhèyàng gèng zìrán de biǎodá:", translation: "Dica (para seu chinês): A frase que você disse tem um pouco de repetição, você pode expressar de forma mais natural assim:", tokens: ["小贴士：", "你刚才", "说的句子", "有一点", "重复，", "可以", "这样", "更自然地", "表达："], keywords: [{ id: "w17-1", word: "重复", pinyin: "chóngfù", meaning: "Repetitivo / Repetir" }, { id: "w17-2", word: "表达", pinyin: "biǎodá", meaning: "Expressar" }] },
-            { id: 18, chinese: "你写的：“我是从YouTube我是从YouTube上了解他这件事的。”", pinyin: "Nǐ xiě de: 'Wǒ shì cóng YouTube wǒ shì cóng YouTube shàng liǎojiě tā zhè jiàn shì de.'", translation: "O que você escreveu: 'Eu sou do YouTube eu sou do YouTube saber sobre ele isso.'", tokens: ["你写的：", "“我是从", "YouTube", "我是从", "YouTube 上", "了解他", "这件事的。”"], keywords: [{ id: "w18-1", word: "了解", pinyin: "liǎojiě", meaning: "Entender / Saber" }] },
-            { id: 19, chinese: "更自然的说法：“我是从 YouTube 上了解到这件事的。”", pinyin: "Gèng zìrán de shuōfǎ: 'Wǒ shì cóng YouTube shàng liǎojiě dào zhè jiàn shì de.'", translation: "Forma mais natural: 'Eu fiquei sabendo disso através do YouTube.'", tokens: ["更自然的", "说法：", "“我是", "从 YouTube 上", "了解到", "这件", "事的。”"], keywords: [{ id: "w19-1", word: "自然", pinyin: "zìrán", meaning: "Natural" }, { id: "w19-2", word: "说法", pinyin: "shuōfǎ", meaning: "Maneira de dizer" }] },
-            { id: 20, chinese: "下一步 (Next Step): 你想尝试用中文问我一个关于“语音识别”的具体问题吗？", pinyin: "Xià yī bù: Nǐ xiǎng chángshì yòng zhōngwén wèn wǒ yīgè guānyú 'yǔyīn shíbié' de jùtǐ wèntí ma?", translation: "Próximo passo: Você quer tentar me fazer uma pergunta específica sobre 'reconhecimento de voz' em chinês?", tokens: ["下一步：", "你想", "尝试", "用中文", "问我", "一个关于", "“语音识别”", "的", "具体问题吗？"], keywords: [{ id: "w20-1", word: "尝试", pinyin: "chángshì", meaning: "Tentar / Experimentar" }, { id: "w20-2", word: "具体", pinyin: "jùtǐ", meaning: "Específico" }] },
-            { id: 21, chinese: "或者我们可以试着模拟一段对话，测试一下 AI 的理解能力？", pinyin: "Huòzhě wǒmen kěyǐ shìzhe mónǐ yīduàn duìhuà, cèshì yīxià AI de lǐjiě nénglì?", translation: "Ou podemos tentar simular um diálogo para testar a capacidade de compreensão da IA?", tokens: ["或者", "我们可以", "试着", "模拟", "一段对话，", "测试一下", "AI 的", "理解能力？"], keywords: [{ id: "w21-1", word: "模拟", pinyin: "mónǐ", meaning: "Simular" }, { id: "w21-2", word: "能力", pinyin: "nénglì", meaning: "Habilidade / Capacidade" }] }
+        // --- DADOS PADRÃO (Fallback) ---
+        const defaultData = [
+            { id: 1, chinese: "点击右上角的设置按钮。", pinyin: "Diǎnjī yòushàngjiǎo de shèzhì ànniǔ.", translation: "Clique no botão de configurações no canto superior direito.", tokens: ["点击", "右上角", "的", "设置", "按钮。"], keywords: [{ id: "w1-1", word: "设置", pinyin: "shèzhì", meaning: "Configuração" }] },
+            { id: 2, chinese: "你可以粘贴新的学习内容。", pinyin: "Nǐ kěyǐ zhāntiē xīn de xuéxí nèiróng.", translation: "Você pode colar novo conteúdo de estudo.", tokens: ["你", "可以", "粘贴", "新的", "学习", "内容。"], keywords: [{ id: "w2-1", word: "粘贴", pinyin: "zhāntiē", meaning: "Colar" }] }
         ];
 
         // --- HELPERS ---
@@ -99,23 +76,28 @@
         // --- HOOK DE ESTATÍSTICAS ---
         const useStats = () => {
             const [stats, setStats] = useState({ correct: 0, wrong: 0, history: [], wordCounts: {} });
+            const [savedIds, setSavedIds] = useState([]);
 
             useEffect(() => {
                 try {
-                    const saved = localStorage.getItem('mandarin_hsk_stats');
-                    if (saved) {
-                        const parsed = JSON.parse(saved);
-                        if (!parsed.wordCounts) parsed.wordCounts = {};
-                        setStats(parsed);
-                    }
+                    const localStats = localStorage.getItem('mandarin_hsk_stats');
+                    if (localStats) setStats(JSON.parse(localStats));
+                    
+                    const localSaved = localStorage.getItem('mandarin_hsk_recovery');
+                    if (localSaved) setSavedIds(JSON.parse(localSaved));
                 } catch (e) {}
             }, []);
+
+            const toggleSave = (id) => {
+                const newIds = savedIds.includes(id) ? savedIds.filter(i => i !== id) : [...savedIds, id];
+                setSavedIds(newIds);
+                localStorage.setItem('mandarin_hsk_recovery', JSON.stringify(newIds));
+            };
 
             const recordResult = (isCorrect, word, type = 'general') => {
                 setStats(prev => {
                     const currentCounts = prev.wordCounts || {};
                     const newCount = !isCorrect ? (currentCounts[word] || 0) + 1 : (currentCounts[word] || 0);
-                    
                     const newStats = {
                         correct: prev.correct + (isCorrect ? 1 : 0),
                         wrong: prev.wrong + (!isCorrect ? 1 : 0),
@@ -135,21 +117,17 @@
                 localStorage.setItem('mandarin_hsk_stats', JSON.stringify(empty));
             };
 
-            return { stats, recordResult, clearStats };
+            return { stats, recordResult, clearStats, savedIds, toggleSave };
         };
 
-        // --- HEADER ---
-        const Header = ({ onOpenStats, onOpenPronounce }) => (
+        // --- HEADER COM CONFIG ---
+        const Header = ({ onOpenStats, onOpenPronounce, onOpenConfig }) => (
             <header className="bg-brand-700 text-white px-4 py-3 flex justify-between items-center shadow-md flex-shrink-0 z-20">
                 <div className="flex items-center gap-2"><Icon name="brain-circuit" size={24} className="text-white" /><h1 className="text-lg font-bold tracking-tight">Mandarim</h1></div>
                 <div className="flex items-center gap-3">
-                    <button onClick={onOpenPronounce} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors mr-1">
-                        <Icon name="mic" size={18} />
-                    </button>
-                    <button onClick={onOpenStats} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors">
-                        <Icon name="bar-chart-2" size={18} />
-                    </button>
-                    <div className="bg-white/20 px-2 py-1 rounded text-xs font-medium backdrop-blur-sm">Deep Thinking</div>
+                    <button onClick={onOpenPronounce} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors mr-1"><Icon name="mic" size={18} /></button>
+                    <button onClick={onOpenStats} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors mr-1"><Icon name="bar-chart-2" size={18} /></button>
+                    <button onClick={onOpenConfig} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors"><Icon name="settings" size={18} /></button>
                 </div>
             </header>
         );
@@ -165,7 +143,85 @@
 
         const EmptyState = ({ msg, icon = "bookmark" }) => (<div className="flex flex-col items-center justify-center h-full text-slate-400 p-8 text-center"><div className="bg-slate-100 p-6 rounded-full mb-4"><Icon name={icon} size={32} className="opacity-50" /></div><p className="font-medium">{msg}</p></div>);
 
-        // --- MÓDULO DE PRONÚNCIA (COM PINYIN MATCHING) ---
+        // --- MODAL DE CONFIGURAÇÃO (EDITOR DE DADOS) ---
+        const ConfigModal = ({ currentData, onClose, onSave }) => {
+            const [jsonInput, setJsonInput] = useState('');
+            const [error, setError] = useState(null);
+
+            useEffect(() => {
+                setJsonInput(JSON.stringify(currentData, null, 2));
+            }, [currentData]);
+
+            const handleSave = () => {
+                try {
+                    const parsed = JSON.parse(jsonInput);
+                    if (!Array.isArray(parsed)) throw new Error("O JSON deve ser uma lista (Array).");
+                    onSave(parsed);
+                    onClose();
+                } catch (e) {
+                    setError("JSON Inválido: " + e.message);
+                }
+            };
+
+            const handleReset = () => {
+                if(confirm("Restaurar dados originais? Isso apagará seu texto personalizado.")) {
+                    onSave(null); // Null reseta para o default
+                    onClose();
+                }
+            };
+
+            return (
+                <div className="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-pop">
+                    <div className="bg-white w-full max-w-lg h-[80vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+                        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Icon name="database" size={20} className="text-brand-600"/> Editor de Conteúdo</h2>
+                            <button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600"><Icon name="x" size={24} /></button>
+                        </div>
+                        <div className="flex-1 p-4 flex flex-col bg-slate-100">
+                            <p className="text-xs text-slate-500 mb-2">Cole o JSON gerado pelo prompt aqui para atualizar o conteúdo do app.</p>
+                            <textarea 
+                                value={jsonInput}
+                                onChange={(e) => { setJsonInput(e.target.value); setError(null); }}
+                                className="flex-1 w-full p-3 font-mono text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:outline-none resize-none"
+                                spellCheck="false"
+                            ></textarea>
+                            {error && <p className="text-red-500 text-xs mt-2 font-bold">{error}</p>}
+                        </div>
+                        <div className="p-4 border-t border-slate-100 bg-white flex gap-3">
+                            <button onClick={handleReset} className="px-4 py-3 rounded-xl border border-red-200 text-red-500 text-sm font-bold hover:bg-red-50">Restaurar</button>
+                            <button onClick={handleSave} className="flex-1 px-4 py-3 rounded-xl bg-brand-600 text-white text-sm font-bold hover:bg-brand-700 shadow-lg shadow-brand-200">Salvar Alterações</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const StatsModal = ({ stats, onClose, onClear }) => {
+            if (!stats) return null;
+            const total = stats.correct + stats.wrong;
+            const accuracy = total > 0 ? Math.round((stats.correct / total) * 100) : 0;
+            return (
+                <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center animate-pop">
+                    <div className="bg-white w-full max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl h-[80vh] flex flex-col overflow-hidden animate-slide-up sm:animate-none">
+                        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50"><h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Icon name="activity" size={20} className="text-brand-600"/> Desempenho</h2><button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600"><Icon name="x" size={24} /></button></div>
+                        <div className="p-6 overflow-y-auto flex-1">
+                            <div className="grid grid-cols-2 gap-4 mb-6"><div className="bg-brand-50 p-4 rounded-xl border border-brand-100 text-center"><span className="block text-3xl font-bold text-brand-600 mb-1">{stats.correct}</span><span className="text-xs font-bold text-brand-400 uppercase tracking-wider">Acertos</span></div><div className="bg-red-50 p-4 rounded-xl border border-red-100 text-center"><span className="block text-3xl font-bold text-red-500 mb-1">{stats.wrong}</span><span className="text-xs font-bold text-red-300 uppercase tracking-wider">Erros</span></div></div>
+                            <h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide"><Icon name="history" size={16} /> Histórico de Erros</h3>
+                            {stats.history.length === 0 ? <p className="text-center text-slate-400 text-sm py-4">Nenhum erro registrado ainda.</p> : 
+                                <div className="space-y-2">{stats.history.map((entry, idx) => (
+                                    <div key={idx} className="flex justify-between items-center p-3 bg-red-50/50 rounded-lg border border-red-50">
+                                        <div className="flex items-center gap-2"><span className="font-chinese font-bold text-slate-700 text-lg">{entry.word}</span>{stats.wordCounts && stats.wordCounts[entry.word] > 1 && (<span className="bg-red-200 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{stats.wordCounts[entry.word]}x</span>)}</div>
+                                        <div className="text-right"><span className="block text-[10px] font-bold text-red-400 uppercase">{entry.type === 'pronunciation' ? 'Pronúncia' : 'Erro'}</span><span className="block text-[10px] text-slate-400">{entry.date}</span></div>
+                                    </div>))}
+                                </div>
+                            }
+                        </div>
+                        <div className="p-4 border-t border-slate-100 bg-white"><button onClick={onClear} className="w-full py-3 text-sm text-slate-400 hover:text-red-500 font-medium transition-colors flex items-center justify-center gap-2"><Icon name="trash-2" size={16} /> Limpar Histórico</button></div>
+                    </div>
+                </div>
+            );
+        };
+
         const PronunciationModal = ({ data, onClose, onResult }) => {
             const [target, setTarget] = useState(null);
             const [status, setStatus] = useState('idle');
@@ -174,91 +230,57 @@
 
             useEffect(() => {
                 const allKeywords = data.flatMap(s => s.keywords);
-                const random = allKeywords[Math.floor(Math.random() * allKeywords.length)];
-                setTarget(random);
-            }, []);
+                if(allKeywords.length > 0) {
+                    const random = allKeywords[Math.floor(Math.random() * allKeywords.length)];
+                    setTarget(random);
+                }
+            }, [data]);
 
-            // Lógica de Comparação Inteligente (Pinyin)
             const checkSimilarity = (input, targetWord) => {
                 if (!input) return false;
-                
-                // 1. Limpeza básica
                 const cleanInput = input.replace(/[.,\/#!$%\^&\*;:{}=\-_`~() ]/g,"").toLowerCase();
                 const cleanTarget = targetWord.replace(/[.,\/#!$%\^&\*;:{}=\-_`~() ]/g,"").toLowerCase();
-                
-                // 2. Verifica se o caractere exato está contido
                 if (cleanInput.includes(cleanTarget) || cleanTarget.includes(cleanInput)) return true;
-
-                // 3. Verifica via PINYIN (Resolve homófonos como zhǐ/纸 vs 指)
                 try {
                     const pinyinInput = pinyin(cleanInput, { toneType: 'none', type: 'array' }).join('').toLowerCase();
                     const pinyinTarget = pinyin(cleanTarget, { toneType: 'none', type: 'array' }).join('').toLowerCase();
-                    
                     return pinyinInput.includes(pinyinTarget) || pinyinTarget.includes(pinyinInput);
-                } catch (e) {
-                    console.error("Erro na conversão Pinyin", e);
-                    return false;
-                }
+                } catch (e) { return false; }
             }
 
             const startListening = () => {
                 setErrorMsg('');
-                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                    setErrorMsg("Navegador sem suporte a voz."); return;
-                }
-
+                if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) { setErrorMsg("Navegador sem suporte a voz."); return; }
                 try {
                     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                     const recognition = new SpeechRecognition();
-                    recognition.lang = 'zh-CN';
-                    recognition.interimResults = false;
-                    recognition.maxAlternatives = 1;
-
+                    recognition.lang = 'zh-CN'; recognition.interimResults = false; recognition.maxAlternatives = 1;
                     recognition.onstart = () => setStatus('listening');
-                    
                     recognition.onresult = (event) => {
                         const result = event.results[0][0].transcript;
                         setTranscript(result);
-                        
                         if (checkSimilarity(result, target.word)) {
-                            setStatus('success');
-                            onResult(true, target.word, 'pronunciation');
-                            speak("非常好");
+                            setStatus('success'); onResult(true, target.word, 'pronunciation'); speak("非常好");
                             setTimeout(() => {
-                                const allKeywords = data.flatMap(s => s.keywords);
-                                setTarget(allKeywords[Math.floor(Math.random() * allKeywords.length)]);
-                                setStatus('idle');
-                                setTranscript('');
+                                const allKeywords = data.flatMap(s => s.keywords); setTarget(allKeywords[Math.floor(Math.random() * allKeywords.length)]);
+                                setStatus('idle'); setTranscript('');
                             }, 1500);
-                        } else {
-                            setStatus('error');
-                            onResult(false, target.word, 'pronunciation');
-                        }
+                        } else { setStatus('error'); onResult(false, target.word, 'pronunciation'); }
                     };
-
-                    recognition.onerror = (e) => {
-                        setStatus('idle');
-                        if (e.error === 'not-allowed') setErrorMsg("Permissão negada. Use HTTPS.");
-                        else if (e.error === 'no-speech') setErrorMsg("Nenhuma fala detectada.");
-                        else setErrorMsg("Erro: " + e.error);
-                    };
-
+                    recognition.onerror = (e) => { setStatus('idle'); if (e.error === 'not-allowed') setErrorMsg("Permissão negada. Use HTTPS."); else setErrorMsg("Erro: " + e.error); };
                     recognition.onend = () => { if (status === 'listening') setStatus('idle'); };
                     recognition.start();
                 } catch (e) { setErrorMsg("Erro ao iniciar microfone."); }
             };
 
-            if (!target) return null;
+            if (!target) return <div className="fixed inset-0 z-[70] bg-black/80 flex items-center justify-center p-4"><div className="bg-white p-6 rounded-xl"><p>Nenhuma palavra encontrada.</p><button onClick={onClose} className="mt-4 p-2 bg-slate-200 rounded">Fechar</button></div></div>;
 
             return (
                 <div className="fixed inset-0 z-[70] bg-black/80 backdrop-blur-sm flex items-center justify-center animate-pop p-4">
                     <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 relative flex flex-col items-center">
                         <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><Icon name="x" size={24} /></button>
                         <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Treino de Pronúncia</h2>
-                        <div className="mb-8 text-center">
-                            <p className="text-5xl font-chinese font-bold text-slate-800 mb-2">{target.word}</p>
-                            <p className="text-xl text-brand-600 font-medium">{target.pinyin}</p>
-                        </div>
+                        <div className="mb-8 text-center"><p className="text-5xl font-chinese font-bold text-slate-800 mb-2">{target.word}</p><p className="text-xl text-brand-600 font-medium">{target.pinyin}</p></div>
                         <div className={`w-full bg-slate-50 rounded-xl p-4 mb-6 min-h-[60px] flex items-center justify-center text-center border-2 transition-colors ${status === 'success' ? 'border-brand-500 bg-brand-50' : status === 'error' ? 'border-red-400 bg-red-50' : 'border-slate-100'}`}>
                             {status === 'listening' && <p className="text-slate-400 animate-pulse">Ouvindo...</p>}
                             {(status === 'success' || status === 'error') && <p className={`font-chinese text-lg ${status === 'success' ? 'text-brand-700' : 'text-red-600'}`}>{transcript || "..."}</p>}
@@ -271,43 +293,6 @@
             );
         };
 
-        // --- STATS MODAL ---
-        const StatsModal = ({ stats, onClose, onClear }) => {
-            if (!stats) return null;
-            const total = stats.correct + stats.wrong;
-            const accuracy = total > 0 ? Math.round((stats.correct / total) * 100) : 0;
-            return (
-                <div className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center animate-pop">
-                    <div className="bg-white w-full max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl h-[80vh] flex flex-col overflow-hidden animate-slide-up sm:animate-none">
-                        <div className="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50"><h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><Icon name="activity" size={20} className="text-brand-600"/> Desempenho</h2><button onClick={onClose} className="p-2 text-slate-400 hover:text-slate-600"><Icon name="x" size={24} /></button></div>
-                        <div className="p-6 overflow-y-auto flex-1">
-                            <div className="grid grid-cols-2 gap-4 mb-6"><div className="bg-brand-50 p-4 rounded-xl border border-brand-100 text-center"><span className="block text-3xl font-bold text-brand-600 mb-1">{stats.correct}</span><span className="text-xs font-bold text-brand-400 uppercase tracking-wider">Acertos</span></div><div className="bg-red-50 p-4 rounded-xl border border-red-100 text-center"><span className="block text-3xl font-bold text-red-500 mb-1">{stats.wrong}</span><span className="text-xs font-bold text-red-300 uppercase tracking-wider">Erros</span></div></div>
-                            <div className="bg-slate-800 text-white p-4 rounded-xl mb-6 flex justify-between items-center shadow-lg"><div><p className="text-xs opacity-60 uppercase font-bold tracking-wider">Precisão Global</p><p className="text-2xl font-bold">{accuracy}%</p></div><div className="h-10 w-10 rounded-full border-4 border-white/20 flex items-center justify-center"><span className="text-xs font-bold">{total > 0 ? (accuracy >= 80 ? 'A+' : accuracy >= 60 ? 'B' : 'C') : '-'}</span></div></div>
-                            <h3 className="font-bold text-slate-700 mb-3 flex items-center gap-2 text-sm uppercase tracking-wide"><Icon name="history" size={16} /> Histórico de Erros</h3>
-                            {stats.history.length === 0 ? <p className="text-center text-slate-400 text-sm py-4">Nenhum erro registrado ainda.</p> : 
-                                <div className="space-y-2">
-                                    {stats.history.map((entry, idx) => (
-                                        <div key={idx} className="flex justify-between items-center p-3 bg-red-50/50 rounded-lg border border-red-50">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-chinese font-bold text-slate-700 text-lg">{entry.word}</span>
-                                                {stats.wordCounts && stats.wordCounts[entry.word] > 1 && (<span className="bg-red-200 text-red-800 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">{stats.wordCounts[entry.word]}x</span>)}
-                                            </div>
-                                            <div className="text-right">
-                                                <span className="block text-[10px] font-bold text-red-400 uppercase">{entry.type === 'pronunciation' ? 'Pronúncia' : 'Erro'}</span>
-                                                <span className="block text-[10px] text-slate-400">{entry.date}</span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            }
-                        </div>
-                        <div className="p-4 border-t border-slate-100 bg-white"><button onClick={onClear} className="w-full py-3 text-sm text-slate-400 hover:text-red-500 font-medium transition-colors flex items-center justify-center gap-2"><Icon name="trash-2" size={16} /> Limpar Histórico</button></div>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- VIEWS ---
         const ReadingView = ({ data, savedIds, onToggleSave }) => {
             const renderSentence = (sentence) => {
                 let text = sentence.chinese;
@@ -323,7 +308,6 @@
             };
             return (
                 <div className="p-4 space-y-4 pb-24">
-                    <div className="bg-white p-3 rounded-lg shadow-sm border border-slate-100 flex items-center gap-2 text-sm text-slate-500"><Icon name="info" size={16} /><span>Toque nas palavras para salvar.</span></div>
                     {data.map((item) => (<div key={item.id} className="bg-white rounded-xl p-5 shadow-sm border border-slate-100"><div className="flex justify-between items-start gap-4"><div className="font-chinese text-xl leading-loose text-slate-800 flex-1 break-words">{renderSentence(item)}</div><button onClick={() => speak(item.chinese)} className="text-brand-600 bg-brand-50 p-2 rounded-full hover:bg-brand-100 flex-shrink-0"><Icon name="volume-2" size={18} /></button></div><div className="mt-3 pt-3 border-t border-slate-50"><p className="text-slate-500 text-sm italic">{item.translation}</p></div></div>))}
                 </div>
             );
@@ -331,7 +315,7 @@
 
         const ReviewView = ({ data, savedIds, onRemove }) => {
             const [expandedId, setExpandedId] = useState(null);
-            const savedItems = useMemo(() => { let items = []; data.forEach(s => s.keywords.forEach(k => { if (savedIds.includes(k.id)) items.push({ ...k, sentence: s }); })); return items; }, [savedIds]);
+            const savedItems = useMemo(() => { let items = []; data.forEach(s => s.keywords.forEach(k => { if (savedIds.includes(k.id)) items.push({ ...k, sentence: s }); })); return items; }, [savedIds, data]);
             if (savedItems.length === 0) return <EmptyState msg="Marque palavras na Leitura para revisar aqui." />;
             return (
                 <div className="p-4 space-y-3 pb-24">
@@ -520,23 +504,58 @@
 
         // --- APP ---
         const App = () => {
-            const [tab, setTab] = useState('leitura'); const [savedIds, setSavedIds] = useState([]); const [showStats, setShowStats] = useState(false); const [showPronounce, setShowPronounce] = useState(false);
-            const { stats, recordResult, clearStats } = useStats(); 
+            const [tab, setTab] = useState('leitura'); const [savedIds, setSavedIds] = useState([]); const [showStats, setShowStats] = useState(false); const [showPronounce, setShowPronounce] = useState(false); const [showConfig, setShowConfig] = useState(false);
+            const { stats, recordResult, clearStats, toggleSave: storeToggleSave } = useStats(); // Use store's toggleSave
+
+            // Carrega dados dinâmicos do LocalStorage ou do arquivo externo ou do padrão
+            const [data, setData] = useState(defaultData);
+
+            useEffect(() => {
+                // 1. Tenta carregar do LocalStorage (Usuário salvou algo)
+                const localContent = localStorage.getItem('mandarin_app_content');
+                if (localContent) {
+                    try {
+                        setData(JSON.parse(localContent));
+                        return;
+                    } catch (e) { console.error("Erro no JSON local", e); }
+                }
+
+                // 2. Tenta carregar do arquivo externo (se existir)
+                if (window.studyData && Array.isArray(window.studyData)) {
+                    setData(window.studyData);
+                }
+            }, []);
+
+            // Função para salvar novos dados via Modal
+            const handleSaveData = (newData) => {
+                if (newData) {
+                    localStorage.setItem('mandarin_app_content', JSON.stringify(newData));
+                    setData(newData);
+                } else {
+                    // Reset
+                    localStorage.removeItem('mandarin_app_content');
+                    // Recarrega o default ou window.studyData
+                    setData(window.studyData || defaultData);
+                }
+            };
 
             useEffect(() => { try { const localSaved = localStorage.getItem('mandarin_hsk_recovery'); if (localSaved) setSavedIds(JSON.parse(localSaved)); } catch (e) {} }, []);
             
-            const toggleSave = (id) => { const newIds = savedIds.includes(id) ? savedIds.filter(i => i !== id) : [...savedIds, id]; setSavedIds(newIds); localStorage.setItem('mandarin_hsk_recovery', JSON.stringify(newIds)); };
+            const handleToggleSave = (id) => {
+                storeToggleSave(id);
+                setSavedIds(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+            };
 
             return (
                 <div className="h-[100dvh] flex flex-col bg-slate-50 w-full overflow-hidden relative">
-                    <Header onOpenStats={() => setShowStats(true)} onOpenPronounce={() => setShowPronounce(true)} />
+                    <Header onOpenStats={() => setShowStats(true)} onOpenPronounce={() => setShowPronounce(true)} onOpenConfig={() => setShowConfig(true)} />
                     <main className="flex-1 overflow-y-auto w-full no-scrollbar"><div className="max-w-3xl mx-auto h-full">
-                        {tab === 'leitura' && <ReadingView data={studyData} savedIds={savedIds} onToggleSave={toggleSave} />}
-                        {tab === 'revisao' && <ReviewView data={studyData} savedIds={savedIds} onRemove={toggleSave} />}
-                        {tab === 'pratica' && <PracticeView data={studyData} savedIds={savedIds} onResult={recordResult} />}
-                        {tab === 'jogo' && <GameView data={studyData} onResult={recordResult} />}
-                        {tab === 'lab' && <LabView data={studyData} savedIds={savedIds} onResult={recordResult} />}
-                        {tab === 'cards' && <CardsView data={studyData} savedIds={savedIds} onResult={recordResult} />}
+                        {tab === 'leitura' && <ReadingView data={data} savedIds={savedIds} onToggleSave={handleToggleSave} />}
+                        {tab === 'revisao' && <ReviewView data={data} savedIds={savedIds} onRemove={handleToggleSave} />}
+                        {tab === 'pratica' && <PracticeView data={data} savedIds={savedIds} onResult={recordResult} />}
+                        {tab === 'jogo' && <GameView data={data} onResult={recordResult} />}
+                        {tab === 'lab' && <LabView data={data} savedIds={savedIds} onResult={recordResult} />}
+                        {tab === 'cards' && <CardsView data={data} savedIds={savedIds} onResult={recordResult} />}
                     </div></main>
                     <nav className="fixed bottom-0 w-full bg-white border-t border-slate-200 shadow-[0_-5px_20px_rgba(0,0,0,0.03)] z-50 h-[70px] flex justify-around items-center pb-safe">
                         <NavBtn id="leitura" label="Leitura" icon="book-open" active={tab} setTab={setTab} />
@@ -548,7 +567,8 @@
                     </nav>
                     
                     {showStats && <StatsModal stats={stats} onClose={() => setShowStats(false)} onClear={clearStats} />}
-                    {showPronounce && <PronunciationModal data={studyData} onClose={() => setShowPronounce(false)} onResult={recordResult} />}
+                    {showPronounce && <PronunciationModal data={data} onClose={() => setShowPronounce(false)} onResult={recordResult} />}
+                    {showConfig && <ConfigModal currentData={data} onClose={() => setShowConfig(false)} onSave={handleSaveData} />}
                 </div>
             );
         };
